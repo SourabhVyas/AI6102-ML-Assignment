@@ -1,6 +1,8 @@
 \documentclass{article}
+\usepackage{booktabs}
 \usepackage{amsmath, amssymb, bm}
 \usepackage{geometry}
+\usepackage{float}    
 \geometry{margin=1in}
 
 \title{AI6102 Assignment 1}
@@ -205,6 +207,13 @@ With learning rate \(\eta>0\), update each class‐weight:
 -\eta\Bigl[\nabla_{\mathbf{w}^{(c)}}\mathcal{L}_{\mathrm{reg}}\Bigr]
 \]
 
+\[
+\mathbf{w}^{(c)} \;\leftarrow\;
+\mathbf{w}^{(c)}
+-\eta\Bigl[\sum_{i=1}^N
+\bigl(\mathbb{I}(y_i=c)-P(y=c\mid \mathbf{x}_i)\bigr)\,\mathbf{x}_i
++\lambda\,\mathbf{w}^{(c)}\Bigr]
+\]
 
 
 \paragraph{5. Prediction Rule}
@@ -216,6 +225,214 @@ y^*
 =
 \arg\max_{c\in\{0,\dots,C-1\}}P(y=c\mid \mathbf{x}^*).
 \]
+
+
+
+
+
+
+\section{Question 2 (5 marks)}
+This is a hands-on exercise to use the SVC API of scikit-learn1 to train a SVM with the linear kernel and the rbf kernel, respectively, on a binary classification dataset. The details of instructions are described as follows.
+
+\bigskip
+\subsection{Download the a9a dataset \(\dots\)  Detailed information is available here.}
+\subsection{Regarding the linear kernel, show 3-fold cross-validation \(\dots\) training set (in accuracy).}
+
+\begin{table}[H]
+  \centering
+  \caption{The 3‐fold cross‐validation results of varying values of $C$ in SVC with linear kernel on the a9a training set (in accuracy).}
+  \label{tab:linear‐cv‐linear}
+  \begin{tabular}{ccccc}
+    \toprule
+    $C=0.01$ & $C=0.05$ & $C=0.1$ & $C=0.5$ & $C=1$ \\
+    \midrule
+    0.8435 & 84.70\% & 84.72\% & 84.80\% & 84.83\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Parameters:
+\begin{itemize}
+  \item \texttt{StratifiedKFold}:
+    \begin{itemize}
+      \item \texttt{n\_splits} = 3
+      \item \texttt{shuffle} = \texttt{True}
+      \item \texttt{random\_state} = 64
+    \end{itemize}
+  \item \texttt{SVC}:
+    \begin{itemize}
+      \item \texttt{kernel} = \texttt{"linear"}
+      \item \texttt{C} takes values in \{0.01, 0.05, 0.1, 0.5, 1\}
+    \end{itemize}
+  \item \texttt{cross\_val\_score}:
+    \begin{itemize}
+      \item \texttt{cv} = \texttt{skf} (the StratifiedKFold)
+      \item \texttt{scoring} = \texttt{"accuracy"}
+    \end{itemize}
+\end{itemize}
+
+
+\subsection{Regarding the rbf kernel, show 3-fold \(\dots\) Some examples can be found here.}
+
+\begin{table}[H]
+  \centering
+  \caption{The 3‐fold cross‐validation results of varying values of $\gamma$ and $C$ in SVC with RBF kernel on the a9a training set (in accuracy).}
+  \label{tab:rbf-cv}
+  \begin{tabular}{lccccc}
+    \toprule
+    $C\!\setminus\!\gamma$ & 0.01    & 0.05    & 0.1     & 0.5     & 1      \\
+    \midrule
+    0.01                    & 75.92\% & 81.97\% & 81.96\% & 75.92\% & 75.92\%\\
+    0.05                    & 83.04\% & 83.60\% & 83.41\% & 78.97\% & 75.92\%\\
+    0.1                     & 83.74\% & 83.96\% & 83.90\% & 80.63\% & 76.10\%\\
+    0.5                     & 84.33\% & 84.51\% & 84.71\% & 83.33\% & 78.95\%\\
+    1                       & 84.48\% & 84.72\% & 84.76\% & 83.74\% & 79.94\%\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\subsection{Based on the results shown in Tables \(\dots\) the following table:}
+\begin{table}[ht]
+  \centering
+  \caption{Test results of SVC on the a9a test set (in accuracy).}
+  \label{tab:test-results}
+  \begin{tabular}{l l c}
+    \toprule
+    Kernel & Parameter setting      & Test accuracy \\
+    \midrule
+    RBF    & $C=1,\ \gamma=0.1$     &  85.03\%  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\section*{Question 3 (5 marks)}
+The optimization problem of linear soft-margin SVMs can be re-formulated as an instance of empirical structural risk minimization (refer to Page 37 on L5 notes). Show how to reformulate it. Hint: search reference about the hinge loss.
+\bigskip
+\subsection*{Answer}
+\paragraph{1. The standard soft-margin SVM solves}
+
+\[
+\min_{w,b,\{\xi_i\}} \;\frac{1}{2}\lVert w\rVert_2^2 \;+\; C\sum_{i=1}^N \xi_i
+\quad\text{subject to}\quad
+y_i\bigl(w\cdot x_i + b\bigr)\ge 1 - \xi_i,\;\xi_i\ge0
+\]
+
+\paragraph{2. Introduce the hinge loss}
+
+\[
+\ell_{\mathrm{hinge}}\bigl(f(x_i),y_i\bigr)
+=\max\bigl(0,\;1 - y_i\,f(x_i)\bigr),
+\]
+
+where \(f(x) = wx + b\)
+
+At optimum \(\xi_i = \max\bigl(0,\;1-y_i\,f(x_i)\bigr)\) Substituting back gives the unconstrained form
+
+\[
+\min_{w,b}\;\frac{1}{2}\lVert w\rVert_2^2 \;+\; C\sum_{i=1}^N \max\bigl(0,\;1 - y_i(w\cdot x_i + b)\bigr)
+\]
+
+
+\paragraph{3. Empirical Risk Minimization}
+The empirical risk minimization template is
+
+
+\[
+\hat\theta
+=\arg\min_{\theta}\;\sum_{i=1}^N \ell\bigl(f(x_i;\theta),y_i\bigr)
+\;+\;\lambda\,\Omega(\theta).
+\]
+
+
+
+\[\text{Set }
+\theta=(w,b),\quad
+\ell(f(x),y)=\max\bigl(0,\,1 - y\,f(x)\bigr),\quad
+\Omega(\theta)=\tfrac12\lVert w\rVert_2^2,\quad
+\lambda=\tfrac1C.
+\]
+
+
+
+\section*{Question 4 (5 marks)}
+Using the kernel trick introduced in L5 to extend the regularized linear regression model (L3) to solve nonlinear regression problems. Derive a closed-form solution (i.e., to derive a kernelized version of the closed-form solution on Page 50 of L3).
+\bigskip
+\subsection*{Answer}
+\paragraph{1. The primal objective is}
+\[
+\min_{w\in\mathbb{R}^d}
+\;J(w)
+\;=\;\|Xw - y\|_2^2 \;+\;\lambda\,\|w\|_2^2.
+\]
+
+By the representer theorem, the minimizer \(w*\) can be expressed in the span of the rows of \(X\). Introduce a coefficient vector \(\alpha \in \mathbb{R}^N\) :
+
+\[
+w = X^T \alpha,
+\qquad
+\alpha\in\mathbb{R}^N.
+\]
+
+
+\paragraph{2. Objective in Terms of \(alpha\) and Differentiation}
+
+Define the kernel (Gram) matrix \(K = X X^{T} \in \mathbb{R}^{N \times N}\).
+Substitute \(w=X^{T} \alpha \) into \(J(w)\):
+
+\[
+J(\alpha) 
+= \| X (X^{T} \alpha) - y \|_2^2 
++ \lambda \, \| X^{T} \alpha \|_2^2
+= \| K \alpha - y \|_2^2 
++ \lambda \, \alpha^{T} (X X^{T}) \alpha
+\]
+\[
+= \alpha^{T} K^2 \alpha 
+- 2 \, y^{T} K \alpha 
++ y^{T} y 
++ \lambda \, \alpha^{T} K \alpha.
+\]
+
+Differentiate \(J(\alpha)\) wrt \(\alpha\):
+
+
+\[
+\begin{aligned}
+\nabla_\alpha J(\alpha)
+&= 2\,K\,(K\alpha - y) \;+\;2\,\lambda\,K\,\alpha \\
+&= 2\,K\bigl(K\alpha - y + \lambda\,\alpha\bigr).
+\end{aligned}
+\]
+
+
+Set \(\nabla_\alpha J(\alpha) = 0\)
+
+\[
+K\bigl(K\alpha - y + \lambda\,\alpha\bigr)=0
+\;\Longrightarrow\;
+(K + \lambda I)\,\alpha = y.
+\]
+
+\paragraph{3. Solving for \(\alpha\) yields the dual(kernel) closed form}
+
+\[
+\alpha 
+= (K + \lambda I)^{-1}\,y.
+\]
+
+Substitute back to get the primal weight vector:
+
+
+\[
+w 
+= X^T \alpha
+= X^T (K + \lambda I)^{-1}\,y
+= X^T (X X^T + \lambda I)^{-1}\,y.
+\]
+
+
 
 
 
